@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Локальный планировщик дел на неделю">
+    <title>Мой квест на неделю</title>
+    <link rel="stylesheet" href="styles.css?v=step5-followup-v7">
+    <script src="script.js?v=step5-followup-v7" defer></script>
+  </head>
+  <body>
+    <div class="app-shell" id="app">
+      <header class="app-header">
+        <div class="brand-block">
+          <p class="eyebrow">Неделя в фокусе</p>
+          <h1>Мой квест на неделю</h1>
+        </div>
+
+        <nav class="week-navigation" aria-label="Навигация по неделям">
+          <button class="icon-button" id="previous-week" type="button" aria-label="Предыдущая неделя">
+            <span aria-hidden="true">←</span>
+          </button>
+          <div class="week-period" id="week-period" aria-live="polite"></div>
+          <button class="icon-button" id="next-week" type="button" aria-label="Следующая неделя">
+            <span aria-hidden="true">→</span>
+          </button>
+          <button class="secondary-button" id="today-button" type="button">Сегодня</button>
+        </nav>
+
+        <div class="header-actions">
+          <button class="secondary-button" id="inbox-button" type="button" aria-controls="inbox-panel" aria-expanded="false">
+            Входящие <span class="counter-badge" id="inbox-count">0</span>
+          </button>
+          <button class="icon-button" id="settings-button" type="button" aria-label="Открыть настройки" aria-controls="settings-dialog">
+            <span aria-hidden="true">⚙</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="planner-main">
+        <section class="overdue-section" id="overdue-section" hidden aria-labelledby="overdue-title">
+          <button class="overdue-toggle" id="overdue-toggle" type="button" aria-expanded="true" aria-controls="overdue-list">
+            <span id="overdue-title">Остались с прошлых дней</span>
+            <span class="counter-badge" id="overdue-count">0</span>
+          </button>
+          <div class="overdue-list" id="overdue-list"></div>
+        </section>
+
+        <div class="planner-dashboard">
+          <div class="week-overview">
+            <section class="focus-day-card" aria-labelledby="selected-day-title">
+              <header class="focus-day-header">
+                <div>
+                  <p class="section-label">Выбранный день</p>
+                  <div class="day-heading-line">
+                    <h2 id="selected-day-title"></h2>
+                    <span class="today-label" id="selected-day-today" hidden>Сегодня</span>
+                  </div>
+                  <p class="selected-day-date" id="selected-day-date"></p>
+                </div>
+                <div class="day-progress" id="day-progress">Выполнено 0 из 0</div>
+              </header>
+
+              <form class="quick-add-form" id="day-task-form" novalidate>
+                <label class="visually-hidden" for="day-task-input">Название новой задачи</label>
+                <input id="day-task-input" type="text" maxlength="200" placeholder="Добавить задачу и нажать Enter" autocomplete="off" aria-describedby="day-task-error" required>
+                <button type="submit">Добавить</button>
+                <small class="field-error quick-add-error" id="day-task-error" role="alert" hidden></small>
+              </form>
+
+              <p class="drag-instruction" id="drag-instruction" hidden>
+                <span aria-hidden="true">⠿</span>
+                Тяните за ручку на день внизу. ↗ — перенос без мыши.
+              </p>
+
+              <div class="task-list" id="selected-day-tasks" aria-live="polite">
+                <p class="empty-state">На этот день пока ничего не запланировано.</p>
+              </div>
+
+              <div class="motivation-message" id="day-motivation">
+                <strong>Подсказка</strong>
+                <span id="motivation-message">Добавьте первую задачу на этот день.</span>
+              </div>
+
+              <div class="day-note-block">
+                <label for="day-note">Заметка на день</label>
+                <textarea id="day-note" rows="2" maxlength="5000" placeholder="Короткая заметка для этого дня…"></textarea>
+              </div>
+            </section>
+
+            <section class="week-momentum" aria-labelledby="week-progress-title">
+              <div class="week-momentum-heading">
+                <div>
+                  <p class="section-label">Недельный маршрут</p>
+                  <h2 id="week-progress-title">Ваш прогресс</h2>
+                </div>
+              </div>
+              <div class="progress-track" id="week-progress-track" role="progressbar" aria-label="Прогресс недели" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+                <strong class="week-progress" id="week-progress" aria-live="polite">0 из 0</strong>
+              </div>
+              <dl class="week-stats">
+                <div><dt>Выполнено</dt><dd id="week-completed-count">0</dd></div>
+                <div><dt>Осталось</dt><dd id="week-remaining-count">0</dd></div>
+                <div><dt>Всего задач</dt><dd id="week-total-count">0</dd></div>
+              </dl>
+              <p class="week-motivation" id="week-motivation">Добавьте первое дело — и квест начнётся.</p>
+            </section>
+
+            <article class="intention-card goal-card">
+              <div>
+                <p class="section-label">Направление</p>
+                <h2>Цель недели</h2>
+              </div>
+              <label class="visually-hidden" for="week-goal">Цель недели</label>
+              <textarea id="week-goal" rows="3" maxlength="300" placeholder="Что хотелось бы получить от этой недели?"></textarea>
+              <small class="save-status" id="week-goal-status" aria-live="polite"></small>
+              <div class="main-week-task-compact">
+                <div class="main-week-task-content" id="main-week-task-content">
+                  <p class="section-label">Главное дело недели</p>
+                  <p class="empty-copy">Выберите одно главное дело этой недели.</p>
+                </div>
+                <button class="quiet-button" id="select-main-week-task" type="button">Выбрать</button>
+              </div>
+            </article>
+          </div>
+
+          <section class="week-strip-section" aria-labelledby="week-strip-title">
+              <div class="section-heading">
+                <div>
+                  <p class="section-label">Карта квеста</p>
+                  <h2 id="week-strip-title">Вся неделя</h2>
+                </div>
+                <p>Выберите день или перенесите на него задачу</p>
+              </div>
+              <div class="week-strip" id="week-strip"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="panel-backdrop" id="panel-backdrop" hidden></div>
+
+    <aside class="side-panel" id="inbox-panel" aria-labelledby="inbox-title" aria-hidden="true">
+      <header class="panel-header">
+        <div>
+          <p class="section-label">Задачи без даты</p>
+          <h2 id="inbox-title">Входящие</h2>
+        </div>
+        <button class="icon-button" id="close-inbox" type="button" aria-label="Закрыть входящие">×</button>
+      </header>
+      <form class="quick-add-form" id="inbox-task-form" novalidate>
+        <label class="visually-hidden" for="inbox-task-input">Новая входящая задача</label>
+        <input id="inbox-task-input" type="text" maxlength="200" placeholder="Быстро сохранить задачу" autocomplete="off" aria-describedby="inbox-task-error" required>
+        <button type="submit">Добавить</button>
+        <small class="field-error quick-add-error" id="inbox-task-error" role="alert" hidden></small>
+      </form>
+      <div class="task-list inbox-task-list" id="inbox-tasks" aria-live="polite">
+        <p class="empty-state">Здесь можно быстро сохранить задачу без даты.</p>
+      </div>
+    </aside>
+
+    <dialog class="form-dialog" id="task-edit-dialog" aria-labelledby="task-edit-title">
+      <form id="task-edit-form">
+        <header class="panel-header">
+          <div>
+            <p class="section-label">Задача</p>
+            <h2 id="task-edit-title">Редактирование</h2>
+          </div>
+          <button class="icon-button" id="close-task-edit" type="button" aria-label="Закрыть редактирование">×</button>
+        </header>
+
+        <input id="edit-task-id" type="hidden">
+
+        <label class="form-field" for="edit-task-title">
+          <span>Название</span>
+          <input id="edit-task-title" type="text" maxlength="200" aria-describedby="edit-title-error" required>
+          <small class="field-error" id="edit-title-error" aria-live="polite"></small>
+        </label>
+
+        <label class="form-field" for="edit-task-note">
+          <span>Заметка</span>
+          <textarea id="edit-task-note" rows="5" maxlength="2000" placeholder="Необязательная заметка"></textarea>
+        </label>
+
+        <label class="form-field" for="edit-task-category">
+          <span>Категория</span>
+          <select id="edit-task-category">
+            <option value="">Без категории</option>
+            <option value="work">Работа</option>
+            <option value="personal">Личное</option>
+            <option value="home">Дом</option>
+            <option value="study">Учёба</option>
+          </select>
+        </label>
+
+        <label class="checkbox-field" for="edit-task-important">
+          <input id="edit-task-important" type="checkbox">
+          <span>Отметить как важное</span>
+        </label>
+
+        <div class="dialog-actions">
+          <button class="secondary-button" id="cancel-task-edit" type="button">Отмена</button>
+          <button class="primary-button" type="submit">Сохранить</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="form-dialog move-dialog" id="move-task-dialog" aria-labelledby="move-task-title">
+      <form id="move-task-form">
+        <header class="panel-header">
+          <div>
+            <p class="section-label">Перемещение</p>
+            <h2 id="move-task-title">Куда перенести задачу?</h2>
+          </div>
+          <button class="icon-button" id="close-move-task" type="button" aria-label="Закрыть перемещение">×</button>
+        </header>
+
+        <input id="move-task-id" type="hidden">
+
+        <label class="form-field" for="move-task-target">
+          <span>Назначение</span>
+          <select id="move-task-target"></select>
+        </label>
+
+        <label class="form-field custom-date-field" id="custom-date-field" for="move-task-date" hidden>
+          <span>Конкретная дата</span>
+          <input id="move-task-date" type="date" aria-describedby="move-date-error">
+          <small class="field-error" id="move-date-error" aria-live="polite"></small>
+        </label>
+
+        <div class="dialog-actions">
+          <button class="secondary-button" id="cancel-move-task" type="button">Отмена</button>
+          <button class="primary-button" type="submit">Переместить</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="form-dialog move-dialog" id="copy-task-dialog" aria-labelledby="copy-task-title">
+      <form id="copy-task-form">
+        <header class="panel-header">
+          <div>
+            <p class="section-label">Просроченная задача</p>
+            <h2 id="copy-task-title">Куда скопировать?</h2>
+          </div>
+          <button class="icon-button" id="close-copy-task" type="button" aria-label="Закрыть копирование">×</button>
+        </header>
+        <input id="copy-task-id" type="hidden">
+        <label class="form-field" for="copy-task-target">
+          <span>Назначение</span>
+          <select id="copy-task-target"></select>
+        </label>
+        <label class="form-field custom-date-field" id="copy-custom-date-field" for="copy-task-date" hidden>
+          <span>Конкретная дата</span>
+          <input id="copy-task-date" type="date" aria-describedby="copy-date-error">
+          <small class="field-error" id="copy-date-error" aria-live="polite"></small>
+        </label>
+        <div class="dialog-actions">
+          <button class="secondary-button" id="cancel-copy-task" type="button">Отмена</button>
+          <button class="primary-button" type="submit">Скопировать</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="form-dialog" id="main-task-dialog" aria-labelledby="main-task-dialog-title">
+      <form id="main-task-form">
+        <header class="panel-header">
+          <div>
+            <p class="section-label">Главное дело</p>
+            <h2 id="main-task-dialog-title">Главная задача недели</h2>
+          </div>
+          <button class="icon-button" id="close-main-task" type="button" aria-label="Закрыть редактор главной задачи">×</button>
+        </header>
+        <label class="form-field" for="main-task-title-input">
+          <span>Название</span>
+          <input id="main-task-title-input" type="text" maxlength="200" aria-describedby="main-task-title-error" required>
+          <small class="field-error" id="main-task-title-error" aria-live="polite"></small>
+        </label>
+        <div class="dialog-actions">
+          <button class="secondary-button" id="cancel-main-task" type="button">Отмена</button>
+          <button class="primary-button" type="submit">Сохранить</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="form-dialog" id="main-copy-dialog" aria-labelledby="main-copy-title">
+      <form id="main-copy-form">
+        <header class="panel-header">
+          <div>
+            <p class="section-label">Копирование</p>
+            <h2 id="main-copy-title">Перенести на другую неделю</h2>
+          </div>
+          <button class="icon-button" id="close-main-copy" type="button" aria-label="Закрыть копирование главной задачи">×</button>
+        </header>
+        <label class="form-field" for="main-copy-date">
+          <span>Любая дата нужной недели</span>
+          <input id="main-copy-date" type="date" aria-describedby="main-copy-error" required>
+          <small class="field-error" id="main-copy-error" aria-live="polite"></small>
+        </label>
+        <div class="dialog-actions">
+          <button class="secondary-button" id="cancel-main-copy" type="button">Отмена</button>
+          <button class="primary-button" type="submit">Продолжить</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="form-dialog confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title">
+      <form method="dialog">
+        <header class="panel-header">
+          <div>
+            <p class="section-label">Подтверждение</p>
+            <h2 id="confirm-title">Подтвердите действие</h2>
+          </div>
+        </header>
+        <p id="confirm-message"></p>
+        <div class="dialog-actions">
+          <button class="secondary-button" id="confirm-cancel" value="cancel">Отмена</button>
+          <button class="primary-button" id="confirm-accept" value="confirm">Продолжить</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="settings-dialog" id="settings-dialog" aria-labelledby="settings-title">
+      <form method="dialog">
+        <header class="panel-header">
+          <div>
+            <p class="section-label">Параметры</p>
+            <h2 id="settings-title">Настройки</h2>
+          </div>
+          <button class="icon-button" value="close" aria-label="Закрыть настройки">×</button>
+        </header>
+        <fieldset>
+          <legend>Отображение</legend>
+          <label class="setting-row" for="setting-show-completed">
+            <span>Показывать выполненные задачи</span>
+            <input id="setting-show-completed" type="checkbox">
+          </label>
+          <label class="setting-row" for="setting-show-motivation">
+            <span>Показывать поддерживающие фразы</span>
+            <input id="setting-show-motivation" type="checkbox">
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Доступные категории</legend>
+          <p class="settings-hint">Скрытая категория останется у уже созданных задач.</p>
+          <label class="setting-row" for="setting-category-work">
+            <span><span class="category-dot category-work" aria-hidden="true"></span>Работа</span>
+            <input id="setting-category-work" type="checkbox" value="work">
+          </label>
+          <label class="setting-row" for="setting-category-personal">
+            <span><span class="category-dot category-personal" aria-hidden="true"></span>Личное</span>
+            <input id="setting-category-personal" type="checkbox" value="personal">
+          </label>
+          <label class="setting-row" for="setting-category-home">
+            <span><span class="category-dot category-home" aria-hidden="true"></span>Дом</span>
+            <input id="setting-category-home" type="checkbox" value="home">
+          </label>
+          <label class="setting-row" for="setting-category-study">
+            <span><span class="category-dot category-study" aria-hidden="true"></span>Учёба</span>
+            <input id="setting-category-study" type="checkbox" value="study">
+          </label>
+        </fieldset>
+        <button class="danger-button" id="delete-all-data" type="button">Удалить все данные</button>
+      </form>
+    </dialog>
+
+    <div class="toast-region" id="toast-region" aria-live="assertive" aria-atomic="true"></div>
+  </body>
+</html>
+
